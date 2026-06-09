@@ -1,0 +1,138 @@
+classDiagram
+  
+    class TarjetaViajera {
+        +fechaDeAlta: LocalDateTime
+        +saldo: Double
+    }
+
+    class Cliente {
+        -edad: Int
+        +email: String
+        +tarjeta: TarjetaViajera
+        +saldo() Double
+        +cargarTarjeta(monto: Double) Unit
+        +calcularCosto() Double
+        +esMenorDeEdad() Boolean
+        +esJubilado() Boolean
+        +cobrarViaje(monto: Double) Unit
+    }
+
+    class IViaje {
+        <<interface>>
+        +costoViaje(pasajero: Cliente) Double
+        +costoBase: Double
+        +timestamp: LocalDateTime
+    }
+
+    class Viaje {
+        <<abstract>>
+        +origen: Lugar
+        +destino: Lugar
+        +timestamp: LocalDateTime
+        +costoBase: Double
+        +topeDeDeuda: Int
+        #pasajeros: Cliente[]
+        -observers: IObserver[]
+        +costoViaje(pasajero: Cliente) Double
+        +validarPasajero(cliente: Cliente) Unit*
+        +agregarPasajero(cliente: Cliente) Unit
+        +removePasajero(cliente: Cliente) Unit
+        +agregarObserver(observer: IObserver) Unit
+        +completarViaje() Unit
+        +kilometrosRecorridos() Double
+    }
+
+    class IObserver {
+        <<interface>>
+        +recibirNotificacion(viaje: Viaje, pasajeros: Cliente[]) Unit
+    }
+
+    class ViajeProgramado {
+        -topeDeudor: Double
+        -topeDeGente: Number
+        +validarPasajero(cliente: Cliente) Unit
+    }
+
+    class Itinerario {
+        -puntosIntermedios: Itinerario[]
+        +validarPasajero(cliente: Cliente) Unit
+    }
+
+    class DescuentoDeEdad {
+        -viaje: IViaje
+        -DESCUENTO_TREINTA_OFF: Double
+        -DESCUENTO_CINCUENTA_OFF: Double
+        +costoViaje(pasajero: Cliente) Double
+    }
+
+    class HoraPico {
+        -viaje: IViaje
+        -esHoraPico() Boolean
+        +costoViaje(pasajero: Cliente) Double
+    }
+
+    class ViajeBuilder {
+        -viaje: IViaje
+        +conDescuentoDeEdad() ViajeBuilder
+        +conCostoHoraPico() ViajeBuilder
+        +build() IViaje
+    }
+
+    class Lugar {
+        +nombre: String
+        +coordenadas: FloatArray
+        +latitud() Float
+        +longitud() Float
+    }
+
+    class ClienteObserver {
+        -smtp: MailSender
+        +recibirNotificacion(viaje: Viaje, pasajeros: Cliente[]) Unit
+    }
+
+    class ViajeObserver {
+        -tracking: TrackingDeViajes
+        +recibirNotificacion(viaje: Viaje, pasajeros: Cliente[]) Unit
+    }
+
+    class MailSender {
+        <<interface>>
+        +enviar(mail: String) Unit
+    }
+
+    class Reporte {
+        +pasajero: Cliente
+        +kilometrosPorMes: Map~YearMonth, Double~
+    }
+
+    class TrackingDeViajes {
+        -base: Map~Cliente, Viaje[]~
+        +guardarViaje(pasajero: Cliente, viaje: Viaje) Unit
+        +generarReportePara(pasajero: Cliente) Reporte
+    }
+
+    class BusinessException {
+        +message: String
+    }
+
+    IViaje <|.. Viaje
+    Viaje <|-- Itinerario
+    Viaje <|-- ViajeProgramado
+    Viaje o-- IObserver
+    Viaje o-- Lugar
+    Viaje o-- Cliente
+    IObserver <|.. ViajeObserver
+    IObserver <|.. ClienteObserver
+    ClienteObserver o-- MailSender
+    ViajeObserver o-- TrackingDeViajes
+    TrackingDeViajes o-- Cliente
+    TrackingDeViajes o-- Viaje
+    TrackingDeViajes ..> Reporte : crea
+    IViaje <|.. DescuentoDeEdad
+    IViaje <|.. HoraPico
+    DescuentoDeEdad o-- IViaje
+    HoraPico o-- IViaje
+    ViajeBuilder o-- IViaje
+    Cliente *-- TarjetaViajera
+    ViajeProgramado ..> BusinessException : lanza
+    Itinerario ..> BusinessException : lanza
