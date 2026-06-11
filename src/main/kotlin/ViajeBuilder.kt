@@ -1,16 +1,24 @@
-class ViajeBuilder(private var viaje: IViaje) {
+class ViajeBuilder(private val viaje: Viaje) {
 
-    fun conDescuentoDeEdad(): ViajeBuilder{
-        this.viaje = DescuentoDeEdad(viaje)
+    fun conDescuentoDeEdad(): ViajeBuilder {
+        viaje.agregarEstrategiaDeCobro(DescuentoDeEdad)
         return this
     }
 
     fun conCostoHoraPico(): ViajeBuilder {
-        this.viaje = HoraPico(viaje)
+        viaje.agregarEstrategiaDeCobro(HoraPico(viaje.timestamp.hour))
         return this
     }
 
-    fun build(): IViaje {
-        return viaje;
+    fun conTracking(tracking: TrackingDeViajes): ViajeBuilder {
+        viaje.agregarObserver(TrackingObserver(tracking))
+        return this
     }
+
+    fun conClienteObserver(): ViajeBuilder{
+        viaje.agregarObserver(ClienteObserver)
+        return this
+    }
+
+    fun build(): Viaje = viaje
 }

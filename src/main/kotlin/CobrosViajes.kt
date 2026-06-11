@@ -1,26 +1,26 @@
-class DescuentoDeEdad(private val viaje: IViaje) : IViaje by viaje {
+interface EstrategiaDeCobro {
+    fun aplicar(costoAcumulado: Double, pasajero: Cliente): Double
+}
+
+object DescuentoDeEdad : EstrategiaDeCobro {
     private val DESCUENTO_TREINTA_OFF = 0.30
     private val DESCUENTO_CINCUENTA_OFF = 0.50
 
-    override fun costoViaje(pasajero: Cliente): Double {
-        var porcentajeDescuento = 0.0
+    override fun aplicar(costoAcumulado: Double, pasajero: Cliente): Double {
+        var porcentaje = 0.0
 
-        if (pasajero.esMenorDeEdad()) porcentajeDescuento = DESCUENTO_TREINTA_OFF
-        else if (pasajero.esJubilado()) porcentajeDescuento = DESCUENTO_CINCUENTA_OFF
+        if (pasajero.esMenorDeEdad()) porcentaje = DESCUENTO_TREINTA_OFF
+        if (pasajero.esJubilado()) porcentaje = DESCUENTO_CINCUENTA_OFF
 
-        val descuento = porcentajeDescuento * viaje.costoViaje(pasajero)
-        return viaje.costoViaje(pasajero) - descuento
+        val descuento = costoAcumulado * porcentaje
+        return costoAcumulado - descuento
     }
 }
 
-class HoraPico(private val viaje: IViaje) : IViaje by viaje {
-    private fun esHoraPico(): Boolean {
-        val hora = viaje.timestamp.hour
-        return (hora in 7..10) || (hora in 16..19)
-    }
+class HoraPico(val hora: Int) : EstrategiaDeCobro {
 
-    override fun costoViaje(pasajero: Cliente): Double {
-        if (esHoraPico()) return viaje.costoViaje(pasajero) + 2.0
-        return viaje.costoViaje(pasajero)
+    override fun aplicar(costoAcumulado: Double, pasajero: Cliente): Double {
+        val esHoraPico = (this.hora in 7..10) || (this.hora in 16..19)
+        return if (esHoraPico) costoAcumulado + 2.0 else costoAcumulado
     }
 }

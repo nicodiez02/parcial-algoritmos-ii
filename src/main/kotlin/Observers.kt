@@ -1,23 +1,22 @@
 interface IObserver {
-    fun recibirNotificacion(viaje: Viaje, pasajeros: MutableList<Cliente>): Unit
+    fun nuevoViajeCompletado(viaje: Viaje, pasajeros: MutableList<Cliente>)
 }
 
-interface MailSender{
-    fun enviar(mail: String): Unit
+data class Mail(val para:String, val de: String, val asunto: String, val cuerpo: String) {}
+object MailSender {
+    fun enviar(email: Mail) = println("Esto es un envio de email :D")
 }
 
-class ClienteObserver(private val smtp: MailSender) : IObserver {
-    override fun recibirNotificacion(viaje: Viaje, pasajeros: MutableList<Cliente>): Unit {
+object ClienteObserver: IObserver {
+    override fun nuevoViajeCompletado(viaje: Viaje, pasajeros: MutableList<Cliente>) {
         pasajeros
             .filter { it.saldo() < viaje.topeDeDeuda }
-            .forEach { smtp.enviar(it.email) }
+            .forEach { MailSender.enviar(Mail(it.email,"adorni@gob.com.ar","","")) }
     }
 }
 
-class ViajeObserver : IObserver {
-    private val tracking = TrackingDeViajes()
-
-    override fun recibirNotificacion(viaje: Viaje, pasajeros: MutableList<Cliente>): Unit {
-        pasajeros.forEach { tracking.guardarViaje(it, viaje) }
+class TrackingObserver(val herramientaDeTrackeo: TrackingDeViajes): IObserver{
+    override fun nuevoViajeCompletado(viaje: Viaje, pasajeros: MutableList<Cliente>){
+        pasajeros.forEach { this.herramientaDeTrackeo.guardarViaje(it, viaje) }
     }
 }

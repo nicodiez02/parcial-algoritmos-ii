@@ -7,8 +7,6 @@ import kotlin.math.sqrt
 
 interface IViaje {
     fun costoViaje(pasajero: Cliente): Double
-    val costoBase: Double
-    val timestamp: LocalDateTime
 }
 
 data class Lugar(val nombre: String, val coordenadas: FloatArray) {
@@ -20,21 +18,25 @@ data class Lugar(val nombre: String, val coordenadas: FloatArray) {
 abstract class Viaje(
     val origen: Lugar,
     val destino: Lugar,
-    override val timestamp: LocalDateTime = LocalDateTime.now()
+    val timestamp: LocalDateTime = LocalDateTime.now()
 ) : IViaje {
     val topeDeDeuda = 2
 
     protected val pasajeros: MutableList<Cliente> = mutableListOf()
     private val observers: MutableList<IObserver> = mutableListOf()
-    override val costoBase = 5.0
-    override fun costoViaje(pasajero: Cliente) = this.costoBase
+    private val estrategiasDeCobro: MutableList<EstrategiaDeCobro> = mutableListOf()
+
+    override fun costoViaje(pasajero: Cliente) =
+        estrategiasDeCobro.fold(5.0) { costoAcumulado, estrategia -> estrategia.aplicar(costoAcumulado, pasajero) }
+
     abstract fun validarPasajero(cliente: Cliente)
 
     fun agregarObserver(observer: IObserver) = observers.add(observer)
+    fun agregarEstrategiaDeCobro(estrategia: EstrategiaDeCobro) = estrategiasDeCobro.add(estrategia)
     fun removePasajero(cliente: Cliente)= pasajeros.remove(cliente)
     fun completarViaje() {
         pasajeros.forEach { it.cobrarViaje(this.costoViaje(it)) }
-        observers.forEach { it.recibirNotificacion(this, pasajeros) }
+        observers.forEach { it.nuevoViajeCompletado(this, pasajeros) }
     }
 
     fun agregarPasajero(cliente: Cliente) {
